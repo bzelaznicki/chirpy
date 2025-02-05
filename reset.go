@@ -7,6 +7,6 @@ func (apiCfg *apiConfig) handlerReset() http.Handler {
 		apiCfg.fileserverHits.Swap(0)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(200)
-		w.Write([]byte("Reset stats successfully"))
+		w.Write([]byte("Reset stats successfully\n"))
 	})
 }
