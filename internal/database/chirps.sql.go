@@ -44,6 +44,24 @@ func (q *Queries) GetChirps(ctx context.Context) ([]Chirp, error) {
 	return items, nil
 }
 
+const getSingleChirpByUUID = `-- name: GetSingleChirpByUUID :one
+
+SELECT id, created_at, updated_at, body, user_id FROM chirps WHERE id = $1
+`
+
+func (q *Queries) GetSingleChirpByUUID(ctx context.Context, id uuid.UUID) (Chirp, error) {
+	row := q.db.QueryRowContext(ctx, getSingleChirpByUUID, id)
+	var i Chirp
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Body,
+		&i.UserID,
+	)
+	return i, err
+}
+
 const postChirp = `-- name: PostChirp :one
 INSERT INTO chirps (id, created_at, updated_at, body, user_id)
 VALUES (

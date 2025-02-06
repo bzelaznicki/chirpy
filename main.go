@@ -78,6 +78,7 @@ func main() {
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerPostChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
+	mux.HandleFunc("GET /api/chirps/{id}", apiCfg.handlerGetSingleChirp)
 
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileSrv))
 

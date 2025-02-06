@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -99,4 +100,27 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, chirpsResponse)
+}
+
+func (cfg *apiConfig) handlerGetSingleChirp(w http.ResponseWriter, r *http.Request) {
+
+	chirpId, err := uuid.Parse(r.PathValue("id"))
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Error parsing ID", err)
+		return
+	}
+
+	chirp, err := cfg.getChirpByUUID(r, chirpId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "Chirp not found", nil)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "Error getting Chirp", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, chirp)
+
 }
