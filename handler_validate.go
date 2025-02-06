@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 )
 
 func handlerValidate(w http.ResponseWriter, r *http.Request) {
@@ -12,7 +14,7 @@ func handlerValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -32,8 +34,35 @@ func handlerValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cleanedChirp, err := profanityChecker(params.Body)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Unable to proces chirp: %s", err), err)
+		return
+	}
+
 	respondWithJSON(w, http.StatusOK, returnVals{
-		Valid: true,
+		CleanedBody: cleanedChirp, //`json:"cleaned_body"`
 	})
 
+}
+
+func profanityChecker(s string) (string, error) {
+
+	if len(s) == 0 {
+		return "", fmt.Errorf("chirp is empty")
+	}
+	badWords := []string{"kerfuffle", "sharbert", "fornax"}
+	splitString := strings.Split(s, " ")
+
+	for i, word := range splitString {
+		for _, badWord := range badWords {
+			if strings.ToLower(word) == badWord {
+				splitString[i] = "****"
+			}
+		}
+	}
+
+	mergedString := strings.Join(splitString, " ")
+
+	return mergedString, nil
 }
