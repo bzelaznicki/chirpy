@@ -43,6 +43,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerReady)
 	mux.Handle("GET /admin/metrics", apiCfg.handlerMetrics())
 	mux.Handle("POST /admin/reset", apiCfg.handlerReset())
+	mux.HandleFunc("POST /api/validate_chirp", handlerValidate)
 
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileSrv))
 
