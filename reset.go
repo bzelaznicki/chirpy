@@ -2,11 +2,15 @@ package main
 
 import "net/http"
 
-func (apiCfg *apiConfig) handlerReset() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		apiCfg.fileserverHits.Swap(0)
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(200)
-		w.Write([]byte("Reset stats successfully\n"))
-	})
+func (apiCfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
+	if apiCfg.platform != "dev" {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("Reset is only allowed in dev environment."))
+		return
+	}
+	apiCfg.fileserverHits.Store(0)
+	apiCfg.db.ResetUsers(r.Context())
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hits reset to 0 and database reset to initial state."))
+
 }

@@ -1,14 +1,22 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/bzelaznicki/chirpy/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db             *database.Queries
+	platform       string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -28,27 +36,51 @@ func (apiCfg *apiConfig) handlerMetrics() http.Handler {
 }
 
 func main() {
+	godotenv.Load()
 	const port = "8080"
 	const filepathRoot = "."
 
-	apiCfg := apiConfig{}
 	mux := http.NewServeMux()
 	srv := &http.Server{
 		Handler: mux,
 		Addr:    ":" + port,
 	}
 
+	dbUrl := os.Getenv("DB_URL")
+	if dbUrl == "" {
+		log.Fatal("DB_URL must be set")
+	}
+	platform := os.Getenv("PLATFORM")
+
+	if platform == "" {
+		log.Fatal("PLATFORM must be set")
+	}
+
+	db, err := sql.Open("postgres", dbUrl)
+
+	if err != nil {
+		log.Fatalf("database connection failed %s", err)
+	}
+	dbQueries := database.New(db)
+
+	apiCfg := apiConfig{
+		fileserverHits: atomic.Int32{},
+		db:             dbQueries,
+		platform:       platform,
+	}
+
 	fileSrv := http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))
 
 	mux.HandleFunc("GET /api/healthz", handlerReady)
 	mux.Handle("GET /admin/metrics", apiCfg.handlerMetrics())
-	mux.Handle("POST /admin/reset", apiCfg.handlerReset())
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/validate_chirp", handlerValidate)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileSrv))
 
 	fmt.Printf("serving files from %s on port %s\n", filepathRoot, port)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
