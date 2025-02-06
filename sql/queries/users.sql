@@ -10,5 +10,8 @@ VALUES (
 -- name: GetUser :one
 SELECT * FROM users WHERE email = $1;
 
+-- name: GetUserByUUID :one
+SELECT * FROM users where id = $1;
+
 -- name: ResetUsers :exec
 DELETE FROM users;

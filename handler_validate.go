@@ -21,22 +21,23 @@ func handlerValidate(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 
 	err := decoder.Decode(&params)
+
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 
 		return
 	}
 
-	const maxChirpLength = 140
+	valid, msg := validateLength(params.Body)
 
-	if len(params.Body) > maxChirpLength {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
+	if !valid {
+		respondWithError(w, http.StatusBadRequest, msg, nil)
 		return
 	}
 
 	cleanedChirp, err := profanityChecker(params.Body)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Unable to proces chirp: %s", err), err)
+		respondWithError(w, http.StatusBadRequest, "Unable to proces chirp.", err)
 		return
 	}
 
@@ -44,6 +45,16 @@ func handlerValidate(w http.ResponseWriter, r *http.Request) {
 		CleanedBody: cleanedChirp, //`json:"cleaned_body"`
 	})
 
+}
+
+func validateLength(s string) (bool, string) {
+	if len(s) > maxChirpLength {
+		return false, "Chirp too long"
+	}
+	if len(s) == 0 {
+		return false, "Chirp empty"
+	}
+	return true, ""
 }
 
 func profanityChecker(s string) (string, error) {
