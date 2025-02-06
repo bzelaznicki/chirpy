@@ -76,3 +76,27 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, postedChirp)
 
 }
+
+func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.db.GetChirps(r.Context())
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error getting Chirps", err)
+		return
+	}
+
+	chirpsResponse := []Chirp{}
+
+	for _, chirp := range chirps {
+		transformedChirp := Chirp{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserID:    chirp.UserID,
+		}
+		chirpsResponse = append(chirpsResponse, transformedChirp)
+	}
+
+	respondWithJSON(w, http.StatusOK, chirpsResponse)
+}
