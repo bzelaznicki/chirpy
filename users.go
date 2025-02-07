@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/bzelaznicki/chirpy/internal/auth"
+	"github.com/bzelaznicki/chirpy/internal/database"
 )
 
 type User struct { ///User struct - global, as may be reused
@@ -16,7 +19,8 @@ type User struct { ///User struct - global, as may be reused
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct { ///Parameters from request
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -25,6 +29,11 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err) // parse error
+		return
+	}
+
+	if len(params.Password) == 0 {
+		respondWithError(w, http.StatusBadRequest, "Enter a password!", fmt.Errorf("no password provided for %s", params.Email))
 		return
 	}
 
@@ -43,7 +52,18 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	dbUser, err := cfg.db.CreateUser(r.Context(), params.Email)
+	hashedPassword, err := auth.HashPassword(params.Password)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error creating user", err)
+	}
+
+	createUser := database.CreateUserParams{
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	}
+
+	dbUser, err := cfg.db.CreateUser(r.Context(), createUser)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to add user", err)
 		return

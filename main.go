@@ -79,6 +79,7 @@ func main() {
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerPostChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
 	mux.HandleFunc("GET /api/chirps/{id}", apiCfg.handlerGetSingleChirp)
+	mux.HandleFunc("POST /api/login", apiCfg.handleLogin)
 
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileSrv))
 
