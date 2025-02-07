@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/bzelaznicki/chirpy/internal/auth"
 	"github.com/google/uuid"
 )
 
@@ -19,4 +20,14 @@ func (cfg *apiConfig) getChirpByUUID(r *http.Request, id uuid.UUID) (Chirp, erro
 		UserID:    chirp.UserID,
 	}
 	return convChirp, nil
+}
+
+func (cfg *apiConfig) authenticateUserByToken(token string) (uuid.UUID, error) {
+	userId, err := auth.ValidateJWT(token, cfg.secret)
+
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	return userId, nil
 }

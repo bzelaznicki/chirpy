@@ -15,6 +15,7 @@ type User struct { ///User struct - global, as may be reused
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +57,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error creating user", err)
+		return
 	}
 
 	createUser := database.CreateUserParams{
@@ -68,12 +70,17 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusInternalServerError, "Failed to add user", err)
 		return
 	}
-
+	token, err := cfg.generateUserToken(dbUser.ID, defaultTokenExpiration)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to generate token", err)
+		return
+	}
 	user := User{
 		ID:        dbUser.ID.String(),
 		CreatedAt: dbUser.CreatedAt,
 		UpdatedAt: dbUser.UpdatedAt,
 		Email:     dbUser.Email,
+		Token:     token,
 	}
 
 	respondWithJSON(w, http.StatusCreated, user)

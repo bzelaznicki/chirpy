@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bzelaznicki/chirpy/internal/auth"
 	"github.com/bzelaznicki/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -20,8 +21,7 @@ type Chirp struct {
 
 func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -32,14 +32,18 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
-	exists, err := cfg.checkIfUserExistsByUUID(r, params.UserID)
+
+	bearerToken, err := auth.GetBearerToken(r.Header)
 
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Unable to lookup user", err)
+		respondWithError(w, http.StatusBadRequest, "Missing or invalid bearer token", err)
 		return
 	}
-	if !exists {
-		respondWithError(w, http.StatusBadRequest, "user does not exist", err)
+
+	userId, err := cfg.authenticateUserByToken(bearerToken)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Token authentication failed", err)
 		return
 	}
 
@@ -58,7 +62,7 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 
 	chirp, err := cfg.db.PostChirp(r.Context(), database.PostChirpParams{
 		Body:   cleanedChirp,
-		UserID: params.UserID,
+		UserID: userId,
 	})
 
 	if err != nil {

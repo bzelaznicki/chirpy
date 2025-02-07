@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"net/http"
 	"net/mail"
+	"time"
 
+	"github.com/bzelaznicki/chirpy/internal/auth"
 	"github.com/google/uuid"
 )
 
@@ -34,4 +36,12 @@ func (cfg *apiConfig) checkIfUserExistsByUUID(r *http.Request, id uuid.UUID) (bo
 		return false, err
 	}
 	return true, nil
+}
+
+func (cfg *apiConfig) generateUserToken(userId uuid.UUID, secsToExpire int) (string, error) {
+	token, err := auth.MakeJWT(userId, cfg.secret, time.Duration(secsToExpire)*time.Second)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }

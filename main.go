@@ -17,6 +17,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	secret         string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -55,6 +56,11 @@ func main() {
 	if platform == "" {
 		log.Fatal("PLATFORM must be set")
 	}
+	secret := os.Getenv("SECRET")
+
+	if secret == "" {
+		log.Fatal("SECRET must be set")
+	}
 
 	db, err := sql.Open("postgres", dbUrl)
 
@@ -67,6 +73,7 @@ func main() {
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 		platform:       platform,
+		secret:         secret,
 	}
 
 	fileSrv := http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))
@@ -88,4 +95,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }
