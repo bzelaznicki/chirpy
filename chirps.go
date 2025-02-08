@@ -40,8 +40,7 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := cfg.authenticateUserByToken(bearerToken)
-
+	userId, err := cfg.validateAccessToken(bearerToken)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Token authentication failed", err)
 		return

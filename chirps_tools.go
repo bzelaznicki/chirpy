@@ -22,12 +22,6 @@ func (cfg *apiConfig) getChirpByUUID(r *http.Request, id uuid.UUID) (Chirp, erro
 	return convChirp, nil
 }
 
-func (cfg *apiConfig) authenticateUserByToken(token string) (uuid.UUID, error) {
-	userId, err := auth.ValidateJWT(token, cfg.secret)
-
-	if err != nil {
-		return uuid.UUID{}, err
-	}
-
-	return userId, nil
+func (cfg *apiConfig) validateAccessToken(token string) (uuid.UUID, error) {
+	return auth.ValidateJWT(token, cfg.secret)
 }
