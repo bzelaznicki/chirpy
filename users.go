@@ -34,14 +34,10 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if len(params.Password) == 0 {
-		respondWithError(w, http.StatusBadRequest, "Enter a password!", fmt.Errorf("no password provided for %s", params.Email))
-		return
-	}
+	err = validateUserDetails(params.Email, params.Password)
 
-	if !validateEmail(params.Email) {
-		respondWithError(w, http.StatusBadRequest, "Invalid email address", fmt.Errorf("invalid email address: %s", params.Email))
-		return
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid credentials, check email and password", err)
 	}
 
 	exists, err := cfg.checkIfUserExists(r, params.Email)

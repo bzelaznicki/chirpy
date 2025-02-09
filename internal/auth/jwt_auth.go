@@ -41,7 +41,7 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 			}
 			return []byte(tokenSecret), nil
 		},
-		// Add explicit validation options
+
 		jwt.WithValidMethods([]string{"HS256"}),
 		jwt.WithExpirationRequired(),
 	)
@@ -54,7 +54,6 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return uuid.UUID{}, fmt.Errorf("invalid token")
 	}
 
-	// Explicit expiration check
 	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
 		return uuid.UUID{}, fmt.Errorf("token has expired")
 	}

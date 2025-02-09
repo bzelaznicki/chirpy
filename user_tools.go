@@ -55,3 +55,15 @@ func (cfg *apiConfig) generateRefreshToken(r *http.Request, userId uuid.UUID) (s
 
 	return token.Token, nil
 }
+
+func validateUserDetails(email, password string) error {
+	if len(password) == 0 {
+		return fmt.Errorf("password missing")
+	}
+
+	if !validateEmail(email) {
+		return fmt.Errorf("invalid email address: %s", email)
+
+	}
+	return nil
+}
