@@ -91,6 +91,7 @@ func main() {
 	mux.HandleFunc("POST /api/revoke", apiCfg.handleRevoke)
 	mux.HandleFunc("PUT /api/users", apiCfg.handleUserUpdate)
 	mux.HandleFunc("DELETE /api/chirps/{id}", apiCfg.handleChirpDelete)
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.handleRedUpgrade)
 
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileSrv))
 
