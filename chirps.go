@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/bzelaznicki/chirpy/internal/auth"
@@ -83,14 +84,14 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 
-	s := r.URL.Query().Get("author_id")
+	authorId := r.URL.Query().Get("author_id")
 
 	chirps := []database.Chirp{}
 	var err error
 
-	if len(s) > 0 {
+	if len(authorId) > 0 {
 		var user uuid.UUID
-		user, err = uuid.Parse(s)
+		user, err = uuid.Parse(authorId)
 
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, "unable to parse user ID", err)
@@ -119,6 +120,12 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 			UserID:    chirp.UserID,
 		}
 		chirpsResponse = append(chirpsResponse, transformedChirp)
+	}
+
+	sorting := r.URL.Query().Get("sort")
+
+	if sorting == "desc" && len(chirpsResponse) > 2 {
+		sort.Slice(chirpsResponse, func(i, j int) bool { return chirpsResponse[i].CreatedAt.After(chirpsResponse[j].CreatedAt) })
 	}
 
 	respondWithJSON(w, http.StatusOK, chirpsResponse)
