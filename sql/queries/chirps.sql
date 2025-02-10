@@ -11,6 +11,9 @@ VALUES (
 -- name: GetChirps :many
 SELECT * FROM chirps ORDER BY created_at ASC;
 
+-- name: GetChirpsByUser :many
+SELECT * FROM chirps where user_id = $1 ORDER BY created_at ASC;
+
 -- name: GetSingleChirpByUUID :one
 
 SELECT * FROM chirps WHERE id = $1;

@@ -82,8 +82,27 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.db.GetChirps(r.Context())
 
+	s := r.URL.Query().Get("author_id")
+
+	chirps := []database.Chirp{}
+	var err error
+
+	if len(s) > 0 {
+		var user uuid.UUID
+		user, err = uuid.Parse(s)
+
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "unable to parse user ID", err)
+			return
+		}
+
+		chirps, err = cfg.db.GetChirpsByUser(r.Context(), user)
+	} else {
+
+		chirps, err = cfg.db.GetChirps(r.Context())
+
+	}
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error getting Chirps", err)
 		return
